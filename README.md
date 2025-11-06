@@ -1,4 +1,21 @@
-Azure OpenAI Responses API: Encrypted Reasoning for Stateless Function CallingThis repository demonstrates how to use the Encrypted Reasoning Items feature of the Azure OpenAI Responses API to maintain model intelligence across multi-turn, stateless conversations while using function calling.The use of encrypted reasoning is critical for two main scenarios:Zero Data Retention (ZDR): When your organization has strict data retention policies and sets store=False (stateless mode) to prevent the conversation history from persisting on the service.Maintaining Model Intelligence: Reasoning models (like GPT-4o series) perform an internal "chain-of-thought" that is not exposed as plaintext. Passing the encrypted reasoning from one turn back in the next turn's input allows the model to leverage its previous thinking, leading to higher performance and more cost-effective token utilization.[!NOTE]This demonstration uses a simulated payment processing function to show how the reasoning model analyzes complex tool outputs (including a simulated risk assessment) across multiple steps.📑 Table of Contents:Part 1: Configuring Solution EnvironmentPart 2: Defining the Business ToolPart 3: Stateless Function Calling with Encrypted ReasoningPart 1: Configuring Solution EnvironmentTo run the provided notebook, you'll need to set up your Azure OpenAI environment and install the required Python packages.1.1 Azure OpenAI Service SetupEnsure you have an Azure OpenAI Service resource with a model deployment that supports reasoning and function calling (e.g., a modern GPT-4 deployment).1.2 AuthenticationThis notebook uses Microsoft Entra ID authentication via DefaultAzureCredential from the azure.identity package.Define a token provider using the get_bearer_token_provider() function to secure your client initialization:Pythontoken_provider = get_bearer_token_provider(
+# Azure AI Foundry: Encrypted Reasoning with Responses API
+
+This repo demonstrates the use of **Encrypted Reasoning** feature of AI Foundry's _Responses API_ to maintain model intelligence across multi-turn, stateless conversations while using function calling.
+
+The use of encrypted reasoning is applicable to two main scenarios:
+- `Zero Data Retention (ZDR)`: When your organisation has strict data retention policies and sets store=False (stateless mode) to prevent the conversation history from persisting on AI Foundry deployments.
+- `Maintaining Model Intelligence`: Reasoning models (like OpenAI o-series) perform an internal "_chain-of-thought_" that is not exposed as plaintext. Passing the encrypted reasoning from one turn back in the next turn's input allows the model to leverage its previous thinking, leading to higher performance and more cost-effective token utilisation.
+
+> [!NOTE]
+> This demo uses a simulated payment processing function to show how the reasoning model analyses complex tool outputs (including a simulated risk assessment) across multiple steps.
+
+## 📑 Table of Contents:
+- [Part 1: Configuring Solution Environment]()
+- [Part 2: Defining the Business Tool]()
+- [Part 3: Stateless Function Calling with Encrypted Reasoning]()
+
+## Part 1: Configuring Solution Environment
+To run the provided notebook, you'll need to set up your Azure OpenAI environment and install the required Python packages.1.1 Azure OpenAI Service SetupEnsure you have an Azure OpenAI Service resource with a model deployment that supports reasoning and function calling (e.g., a modern GPT-4 deployment).1.2 AuthenticationThis notebook uses Microsoft Entra ID authentication via DefaultAzureCredential from the azure.identity package.Define a token provider using the get_bearer_token_provider() function to secure your client initialization:Pythontoken_provider = get_bearer_token_provider(
     DefaultAzureCredential(),
     "https://cognitiveservices.azure.com/.default"
 )
