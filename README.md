@@ -10,24 +10,60 @@ The use of encrypted reasoning is applicable to two main scenarios:
 > This demo uses a simulated payment processing function to show how the reasoning model analyses complex tool outputs (including a simulated risk assessment) across multiple steps.
 
 ## 📑 Table of Contents:
-- [Part 1: Configuring Solution Environment]()
+- [Part 1: Configuring Solution Environment](#part-1-configuring-solution-environment)
 - [Part 2: Defining the Business Tool]()
 - [Part 3: Stateless Function Calling with Encrypted Reasoning]()
 
 ## Part 1: Configuring Solution Environment
-To run the provided notebook, you'll need to set up your Azure OpenAI environment and install the required Python packages.1.1 Azure OpenAI Service SetupEnsure you have an Azure OpenAI Service resource with a model deployment that supports reasoning and function calling (e.g., a modern GPT-4 deployment).1.2 AuthenticationThis notebook uses Microsoft Entra ID authentication via DefaultAzureCredential from the azure.identity package.Define a token provider using the get_bearer_token_provider() function to secure your client initialization:Pythontoken_provider = get_bearer_token_provider(
+To run the provided Jupyter notebook, you'll need to set up your Azure AI Foundry environment and install the required Python packages.
+
+### 1.1 Azure OpenAI Service Setup
+Ensure you have an Azure AI Foundry project with a model deployment that supports reasoning and function calling (e.g., _o4-mini_).
+
+## 1.2 Authentication
+This notebook uses Microsoft Entra ID authentication via **DefaultAzureCredential** from the _azure.identity_ package. Define a token provider using the **get_bearer_token_provider()** function to secure your client initialisation:
+
+``` Python
+token_provider = get_bearer_token_provider(
     DefaultAzureCredential(),
     "https://cognitiveservices.azure.com/.default"
 )
-1.3 Environment VariablesConfigure the following environment variables for your Azure OpenAI deployment:Environment VariableDescriptionAZURE_OPENAI_API_BASEYour Azure OpenAI endpoint URL (e.g., https://<YOUR_AOAI_RESOURCE>.openai.azure.com).AZURE_OPENAI_API_VERSIONThe API version (e.g., 2025-04-01-preview).AZURE_OPENAI_API_DEPLOY_REASONINGThe name of your model deployment (e.g., gpt-4-1106-preview).1.4 Installation of Required Python PackagesInstall the necessary packages:Bashpip install openai azure-identity python-dotenv
-1.5 Azure OpenAI Client SetupInitialise the AzureOpenAI client using your environment variables and the Entra ID token provider:Pythonfrom openai import AzureOpenAI
+```
+
+### 1.3 Environment Variables
+Configure the following environment variables for your Azure AI Foundry deployment:
+
+| Environment Variable                | Description                                                                          |
+| :---------------------------------- | :----------------------------------------------------------------------------------- |
+| `AZURE_OPENAI_API_BASE`             | Azure AI Foundry endpoint URL (e.g., https://<YOUR_AOAI_RESOURCE>.openai.azure.com). |
+| `AZURE_OPENAI_API_VERSION`          | The API version (e.g., 2025-04-01-preview).                                          |
+| `AZURE_OPENAI_API_DEPLOY_REASONING` | The name of your model deployment (e.g., o4-mini).                                   |
+
+### 1.4 Installation of Required Python Packages
+Install the necessary packages:
+
+``` Bash
+pip install openai azure-identity python-dotenv
+```
+
+### 1.5 Azure OpenAI Client Setup
+Initialise the AzureOpenAI client using your environment variables and the Entra ID token provider:
+
+``` Python
+from openai import AzureOpenAI
 
 client = AzureOpenAI(  
     azure_endpoint = AOAI_API_BASE,
     azure_ad_token_provider = token_provider,
     api_version = AOAI_API_VERSION,
 )
-Part 2: Defining the Business ToolThe demonstration uses a custom function, process_credit_card_transaction, which simulates a payment gateway and returns a detailed risk assessment (status, risk score, risk factors). This complexity requires the model to reason before presenting the final answer.2.1 Function DefinitionThe function and its tool schema are defined in the notebook, providing a robust set of inputs and a detailed JSON output.Tool NameDescriptionprocess_credit_card_transactionProcesses a credit card payment securely and returns a detailed risk assessment with specific factors analyzed.Part 3: Stateless Function Calling with Encrypted ReasoningThe core of this example is demonstrating how to retrieve and reuse the encrypted reasoning content across multiple API calls, ensuring the model maintains context in a stateless environment (store=False).3.1 Step 1: Initial Call and Reasoning ExtractionThe first API call is made with two critical parameters:store=False: Enforces statelessness (no conversation history is stored on the server).include=["reasoning.encrypted_content"]: Requests the model's internal reasoning chain to be returned as an encrypted object.The model generates a tool call, and the resulting response includes the reasoning item with the encrypted_content populated.API Call Snippet:Pythonresponse_1 = client.responses.create(
+```
+
+## Part 2: Defining the Business Tool
+The demo solution uses a custom function, _process_credit_card_transaction_, which simulates a payment gateway and returns a detailed risk assessment (status, risk score, risk factors). This complexity requires the model to reason before presenting the final answer.
+
+### 2.1 Function Definition
+The function and its tool schema are defined in the notebook, providing a robust set of inputs and a detailed JSON output.Tool NameDescriptionprocess_credit_card_transactionProcesses a credit card payment securely and returns a detailed risk assessment with specific factors analyzed.Part 3: Stateless Function Calling with Encrypted ReasoningThe core of this example is demonstrating how to retrieve and reuse the encrypted reasoning content across multiple API calls, ensuring the model maintains context in a stateless environment (store=False).3.1 Step 1: Initial Call and Reasoning ExtractionThe first API call is made with two critical parameters:store=False: Enforces statelessness (no conversation history is stored on the server).include=["reasoning.encrypted_content"]: Requests the model's internal reasoning chain to be returned as an encrypted object.The model generates a tool call, and the resulting response includes the reasoning item with the encrypted_content populated.API Call Snippet:Pythonresponse_1 = client.responses.create(
     model=AOAI_DEPLOYMENT,
     input=[user_request],
     tools=tools,
