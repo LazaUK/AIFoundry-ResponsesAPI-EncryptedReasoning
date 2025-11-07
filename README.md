@@ -1,5 +1,4 @@
 # Azure AI Foundry: Encrypted Reasoning with Responses API
-
 This repo demonstrates the use of **Encrypted Reasoning** feature of AI Foundry's _Responses API_ to maintain model intelligence across multi-turn, stateless conversations while using function calling.
 
 The use of encrypted reasoning is applicable to two main scenarios:
@@ -11,7 +10,7 @@ The use of encrypted reasoning is applicable to two main scenarios:
 
 ## 📑 Table of Contents:
 - [Part 1: Configuring Solution Environment](#part-1-configuring-solution-environment)
-- [Part 2: Defining the Business Tool]()
+- [Part 2: Defining the Business Tool](#part-2-defining-the-business-tool)
 - [Part 3: Stateless Function Calling with Encrypted Reasoning]()
 
 ## Part 1: Configuring Solution Environment
@@ -20,8 +19,8 @@ To run the provided Jupyter notebook, you'll need to set up your Azure AI Foundr
 ### 1.1 Azure OpenAI Service Setup
 Ensure you have an Azure AI Foundry project with a model deployment that supports reasoning and function calling (e.g., _o4-mini_).
 
-## 1.2 Authentication
-This notebook uses Microsoft Entra ID authentication via **DefaultAzureCredential** from the _azure.identity_ package. Define a token provider using the **get_bearer_token_provider()** function to secure your client initialisation:
+### 1.2 Authentication
+This notebook uses _Microsoft Entra ID_ authentication via **DefaultAzureCredential** from the _azure.identity_ package. Define a token provider using the **get_bearer_token_provider()** function to secure your client initialisation:
 
 ``` Python
 token_provider = get_bearer_token_provider(
@@ -43,7 +42,7 @@ Configure the following environment variables for your Azure AI Foundry deployme
 Install the necessary packages:
 
 ``` Bash
-pip install openai azure-identity python-dotenv
+pip install openai azure-identity
 ```
 
 ### 1.5 Azure OpenAI Client Setup
@@ -63,7 +62,56 @@ client = AzureOpenAI(
 The demo solution uses a custom function, _process_credit_card_transaction_, which simulates a payment gateway and returns a detailed risk assessment (status, risk score, risk factors). This complexity requires the model to reason before presenting the final answer.
 
 ### 2.1 Function Definition
-The function and its tool schema are defined in the notebook, providing a robust set of inputs and a detailed JSON output.Tool NameDescriptionprocess_credit_card_transactionProcesses a credit card payment securely and returns a detailed risk assessment with specific factors analyzed.Part 3: Stateless Function Calling with Encrypted ReasoningThe core of this example is demonstrating how to retrieve and reuse the encrypted reasoning content across multiple API calls, ensuring the model maintains context in a stateless environment (store=False).3.1 Step 1: Initial Call and Reasoning ExtractionThe first API call is made with two critical parameters:store=False: Enforces statelessness (no conversation history is stored on the server).include=["reasoning.encrypted_content"]: Requests the model's internal reasoning chain to be returned as an encrypted object.The model generates a tool call, and the resulting response includes the reasoning item with the encrypted_content populated.API Call Snippet:Pythonresponse_1 = client.responses.create(
+The function and its tool schema are defined in the notebook, providing a robust set of inputs and a detailed JSON output.
+
+``` Python
+tools = [
+    {
+        "type": "function",
+        "name": "process_credit_card_transaction",
+        "description": "Processes a credit card payment securely. Returns detailed risk assessment with specific factors analyzed.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "card_number": {
+                    "type": "string",
+                    "description": "The 16-digit credit card number"
+                },
+                "expiry_date": {
+                    "type": "string",
+                    "description": "Card expiry date in MM/YY format"
+                },
+                "cvv": {
+                    "type": "string",
+                    "description": "The 3 or 4-digit security code"
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "The transaction amount to charge"
+                },
+                "merchant_id": {
+                    "type": "string",
+                    "description": "The identifier for the merchant"
+                }
+            },
+            "required": ["card_number", "expiry_date", "cvv", "amount", "merchant_id"]
+        }
+    }
+]
+```
+
+## Part 3: Stateless Function Calling with Encrypted Reasoning
+The core of this example is demonstrating how to retrieve and reuse the encrypted reasoning content across multiple API calls.
+
+### 3.1 Step 1: Initial Call and Reasoning Extraction
+The first API call is made with two critical parameters:
+- `store=False`: Enforces statelessness (no conversation history is stored on the backend side).
+- `include=["reasoning.encrypted_content"]`: Requests the model's internal reasoning chain to be returned as an encrypted object.
+
+The model generates a tool call, and the resulting response includes the _reasoning_ item with the _encrypted_content_ populated.
+
+``` Python
+response_1 = client.responses.create(
     model=AOAI_DEPLOYMENT,
     input=[user_request],
     tools=tools,
@@ -71,17 +119,19 @@ The function and its tool schema are defined in the notebook, providing a robust
     store=False, # Stateless mode
     include=["reasoning.encrypted_content"] # Request encrypted data
 )
+
 # Extract the encrypted reasoning item from response_1.output
 reasoning_item = response_1.output[0]
 tool_call_item = response_1.output[1]
-3.2 Step 2: Reusing Encrypted Reasoning in the Next TurnFor the subsequent turn, a new input array is constructed, which includes all items from the previous turn plus the new user request. Crucially, the reasoning_item with the encrypted_content is passed back into the input context.This object is now part of the conversation history for the model to use for its internal thinking process in the current turn.Follow-up Context Structure:JSON[
-    { /* Previous User Request */ },
-    { /* Reasoning Item from Turn 1 with encrypted_content */ },
-    { /* Tool Call Item from Turn 1 */ },
-    { /* Function Call Output Item from Turn 1 (Transaction Result) */ },
-    { /* New User Request: "Explain your risk assessment..." */ }
-]
-Second API Call Snippet:Pythonfollow_up_context = [
+```
+
+### 3.2 Step 2: Reusing Encrypted Reasoning in the Next Turn
+For the subsequent turn, a new _input_ array is constructed, which includes all items from the previous turn plus the new user request. Crucially, the _reasoning_item_ with the **encrypted_content** is passed back into the input context.
+
+This object is now part of the conversation history for the model to use for its internal thinking process in the current turn.
+
+``` Python
+follow_up_context = [
     user_request,
     reasoning_item, # REUSED ENCRYPTED REASONING
     tool_call_item,
@@ -102,5 +152,6 @@ response_2 = client.responses.create(
     tools=tools,
     store=False # Still stateless
 )
-# Model returns detailed explanation based on its previous internal analysis.
-This ensures that the model can correctly analyze and explain the multi-step risk assessment from the function output without needing a full, server-side stored history.
+```
+
+This ensures that the model can correctly analyse and explain the multi-step risk assessment from the function output without needing a full, server-side stored history.
