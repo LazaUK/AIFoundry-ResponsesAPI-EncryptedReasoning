@@ -11,7 +11,7 @@ The use of encrypted reasoning is applicable to two main scenarios:
 ## 📑 Table of Contents:
 - [Part 1: Configuring Solution Environment](#part-1-configuring-solution-environment)
 - [Part 2: Defining the Business Tool](#part-2-defining-the-business-tool)
-- [Part 3: Stateless Function Calling with Encrypted Reasoning]()
+- [Part 3: Stateless Function Calling with Encrypted Reasoning](#part-3-stateless-function-calling-with-encrypted-reasoning)
 
 ## Part 1: Configuring Solution Environment
 To run the provided Jupyter notebook, you'll need to set up your Azure AI Foundry environment and install the required Python packages.
